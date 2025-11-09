@@ -2,7 +2,7 @@ import { Mail, Phone, MapPin, Facebook, Twitter, Linkedin, Instagram } from 'luc
 
 const Footer = () => {
   return (
-    <footer className="bg-blue-900 text-white pt-12 pb-4">
+    <footer className="bg-blue-900 text-white pt-4 pb-4">
       <div className="max-w-7xl mx-auto px-4 md:px-6">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-8">
           <div className="flex flex-col gap-4">
@@ -11,20 +11,6 @@ const Footer = () => {
               Leading textile manufacturer with over 20 years of experience in producing
               high-quality fabrics for global markets.
             </p>
-            <div className="flex gap-4 mt-2">
-              <a href="#" className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center text-white no-underline transition-all hover:bg-blue-600 hover:-translate-y-0.5" aria-label="Facebook">
-                <Facebook size={20} />
-              </a>
-              <a href="#" className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center text-white no-underline transition-all hover:bg-blue-600 hover:-translate-y-0.5" aria-label="Twitter">
-                <Twitter size={20} />
-              </a>
-              <a href="#" className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center text-white no-underline transition-all hover:bg-blue-600 hover:-translate-y-0.5" aria-label="LinkedIn">
-                <Linkedin size={20} />
-              </a>
-              <a href="#" className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center text-white no-underline transition-all hover:bg-blue-600 hover:-translate-y-0.5" aria-label="Instagram">
-                <Instagram size={20} />
-              </a>
-            </div>
           </div>
 
           <div className="flex flex-col gap-4">

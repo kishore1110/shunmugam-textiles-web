@@ -11,6 +11,8 @@ import Supervisors from './pages/admin/Supervisors';
 import Weavers from './pages/admin/Weavers';
 import AdminProducts from './pages/admin/Products';
 import Reports from './pages/admin/Reports';
+import SupervisorDashboard from './pages/supervisor/Dashboard';
+import SupervisorReports from './pages/supervisor/Reports';
 
 function App() {
   return (
@@ -27,28 +29,40 @@ function App() {
 
         {/* Admin Routes - Protected */}
         <Route path="/admin/dashboard" element={
-          <ProtectedRoute>
+          <ProtectedRoute requireRole="admin">
             <Dashboard />
           </ProtectedRoute>
         } />
         <Route path="/admin/supervisors" element={
-          <ProtectedRoute>
+          <ProtectedRoute requireRole="admin">
             <Supervisors />
           </ProtectedRoute>
         } />
         <Route path="/admin/weavers" element={
-          <ProtectedRoute>
+          <ProtectedRoute requireRole="admin">
             <Weavers />
           </ProtectedRoute>
         } />
         <Route path="/admin/products" element={
-          <ProtectedRoute>
+          <ProtectedRoute requireRole="admin">
             <AdminProducts />
           </ProtectedRoute>
         } />
         <Route path="/admin/reports" element={
-          <ProtectedRoute>
+          <ProtectedRoute requireRole="admin">
             <Reports />
+          </ProtectedRoute>
+        } />
+
+        {/* Supervisor Routes - Protected */}
+        <Route path="/supervisor/dashboard" element={
+          <ProtectedRoute requireRole="supervisor">
+            <SupervisorDashboard />
+          </ProtectedRoute>
+        } />
+        <Route path="/supervisor/reports" element={
+          <ProtectedRoute requireRole="supervisor">
+            <SupervisorReports />
           </ProtectedRoute>
         } />
       </Routes>

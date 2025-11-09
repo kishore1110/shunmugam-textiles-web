@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowLeft, FileText, Download, Filter, X } from 'lucide-react';
-import { collection, getDocs } from 'firebase/firestore';
+import { collection, getDocs, query, where } from 'firebase/firestore';
 import { db } from '../../firebase/config';
 import * as XLSX from 'xlsx';
 
@@ -9,50 +9,16 @@ const Reports = () => {
   const [receipts, setReceipts] = useState([]);
   const [filteredReceipts, setFilteredReceipts] = useState([]);
   const [products, setProducts] = useState([]);
-  const [supervisors, setSupervisors] = useState([]);
-  const [weavers, setWeavers] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [supervisorId, setSupervisorId] = useState('');
   
-  // Filter states
+  // Filter states (no supervisorId filter for supervisor)
   const [filters, setFilters] = useState({
     startDate: '',
     endDate: '',
-    supervisorId: '',
     weaverId: ''
   });
   const [showFilters, setShowFilters] = useState(false);
-
-  // Fetch supervisors from Firestore
-  const fetchSupervisors = async () => {
-    try {
-      const querySnapshot = await getDocs(collection(db, 'supervisors'));
-      const supervisorsList = querySnapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      }));
-      setSupervisors(supervisorsList);
-      return supervisorsList;
-    } catch (error) {
-      console.error('Error fetching supervisors:', error);
-      return [];
-    }
-  };
-
-  // Fetch weavers from Firestore
-  const fetchWeavers = async () => {
-    try {
-      const querySnapshot = await getDocs(collection(db, 'weavers'));
-      const weaversList = querySnapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      }));
-      setWeavers(weaversList);
-      return weaversList;
-    } catch (error) {
-      console.error('Error fetching weavers:', error);
-      return [];
-    }
-  };
 
   // Fetch products from Firestore
   const fetchProducts = async () => {
@@ -72,17 +38,26 @@ const Reports = () => {
     }
   };
 
-  // Fetch receipts from Firestore
+  // Fetch receipts from Firestore (filtered by supervisor ID)
   const fetchReceipts = async () => {
     try {
       setLoading(true);
-      await Promise.all([
-        fetchProducts(),
-        fetchSupervisors(),
-        fetchWeavers()
-      ]);
+      await fetchProducts();
       
-      const querySnapshot = await getDocs(collection(db, 'receipts'));
+      const currentSupervisorId = localStorage.getItem('supervisorId');
+      if (!currentSupervisorId) {
+        console.error('Supervisor ID not found. Please login again.');
+        setLoading(false);
+        return;
+      }
+      
+      setSupervisorId(currentSupervisorId);
+      
+      // Query receipts filtered by supervisor ID
+      const receiptsRef = collection(db, 'receipts');
+      const q = query(receiptsRef, where('supervisorId', '==', currentSupervisorId));
+      const querySnapshot = await getDocs(q);
+      
       const receiptsList = querySnapshot.docs.map(doc => ({
         id: doc.id,
         ...doc.data()
@@ -139,14 +114,6 @@ const Reports = () => {
         if (!receiptDate) return false;
         receiptDate.setHours(0, 0, 0, 0);
         return receiptDate <= endDate;
-      });
-    }
-
-    // Filter by supervisor ID
-    if (filters.supervisorId) {
-      filtered = filtered.filter(receipt => {
-        const supervisorId = receipt.supervisorId || receipt.supervisor_id || '';
-        return supervisorId.toLowerCase().includes(filters.supervisorId.toLowerCase());
       });
     }
 
@@ -358,7 +325,7 @@ const Reports = () => {
     XLSX.utils.book_append_sheet(wb, ws, 'Reports');
 
     // Generate filename with date range if filters are applied
-    let filename = 'Reports';
+    let filename = `Reports_Supervisor_${supervisorId}`;
     if (filters.startDate || filters.endDate) {
       const start = filters.startDate ? formatDateForExcel(filters.startDate) : 'All';
       const end = filters.endDate ? formatDateForExcel(filters.endDate) : 'All';
@@ -383,7 +350,6 @@ const Reports = () => {
     setFilters({
       startDate: '',
       endDate: '',
-      supervisorId: '',
       weaverId: ''
     });
   };
@@ -396,7 +362,7 @@ const Reports = () => {
   };
 
   const tableColumns = getTableColumns();
-  const hasActiveFilters = filters.startDate || filters.endDate || filters.supervisorId || filters.weaverId;
+  const hasActiveFilters = filters.startDate || filters.endDate || filters.weaverId;
 
   return (
     <div className="min-h-screen bg-slate-50">
@@ -406,7 +372,7 @@ const Reports = () => {
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-0">
             <div className="flex items-center gap-2 md:gap-4">
               <Link
-                to="/admin/dashboard"
+                to="/supervisor/dashboard"
                 className="p-2 hover:bg-slate-100 rounded-lg transition-colors shrink-0"
               >
                 <ArrowLeft size={20} className="md:w-6 md:h-6 text-blue-900" />
@@ -449,7 +415,7 @@ const Reports = () => {
 
           {showFilters && (
             <div className="p-4 md:p-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {/* Start Date */}
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-2">
@@ -472,20 +438,6 @@ const Reports = () => {
                     type="date"
                     value={filters.endDate}
                     onChange={(e) => handleFilterChange('endDate', e.target.value)}
-                    className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
-                  />
-                </div>
-
-                {/* Supervisor ID */}
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-2">
-                    Supervisor ID
-                  </label>
-                  <input
-                    type="text"
-                    value={filters.supervisorId}
-                    onChange={(e) => handleFilterChange('supervisorId', e.target.value)}
-                    placeholder="Enter Supervisor ID"
                     className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
                   />
                 </div>
@@ -534,7 +486,7 @@ const Reports = () => {
             <p className="text-slate-500">
               {hasActiveFilters 
                 ? 'Try adjusting your filter criteria'
-                : 'No receipts available in the database'
+                : 'No receipts available for your supervisor ID'
               }
             </p>
           </div>
@@ -649,3 +601,4 @@ const Reports = () => {
 };
 
 export default Reports;
+
